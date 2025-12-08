@@ -8,11 +8,11 @@ Bin Packer can read lists from files and group them based on the available space
 ### JSON Parser
 Made to work with Elite Dangerous journals.
 All that is required is to run the main file like so: <br>
-```$ java Main --readLogs SPACE``` <br>
+```$ java -jar BinPacker.jar --readLogs SPACE``` <br>
 Obviously, make sure to replace `SPACE` with the space available for each trip. <br>
 If you only want the runs for the resources that are still left over, add `true` to the end of the command.
 It should look like this: <br>
-```$ java Main --readLogs SPACE true```
+```$ java -jar BinPacker.jar --readLogs SPACE true```
 
 Note: It can take a few minutes to find the last construction site if you had a lot of activity after it.
 
@@ -20,6 +20,10 @@ Note: It can take a few minutes to find the last construction site if you had a 
 This is made to work with any type of file, as long as it meets the following requirements:
  - Use a ` - <Item Name>: <Item Count>` format for each item
  - Include a `Cargo Space: X` anywhere in the file. X should be the amount of space available for each trip.
+
+Run it using: <br>
+```$ java -jar BinPacker.jar LIST.txt```
+Replace `LIST.txt` with the file containing your list.
 
 
 ## Output Formats
