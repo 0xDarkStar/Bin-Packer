@@ -2,35 +2,38 @@
 Bin Packer was made because I got tired of manually grouping items into trips for my games.
 Bin Packer can read lists from files and group them based on the available space for each trip.
 
+## Installation
+Download the latest `BinPacker.jar` from the [Releases](github.com/0xDarkStar/Bin-Packer/releases) page.
 
-## Inputs
+## Usage
 
-### JSON Parser
-Made to work with Elite Dangerous journals.
-All that is required is to run the main file like so: <br>
-```$ java -jar BinPacker.jar --readLogs SPACE``` <br>
-Obviously, make sure to replace `SPACE` with the space available for each trip. <br>
-If you only want the runs for the resources that are still left over, add `true` to the end of the command.
-It should look like this: <br>
-```$ java -jar BinPacker.jar --readLogs SPACE true```
+### Read ED Journals
+Read from your Elite Dangerous journals to find the last visited construction depot.
+```bash
+java -jar BinPacker.jar --readlogs [options]
+```
 
-Note: It can take a few minutes to find the last construction site if you had a lot of activity after it.
+**Options**
+- `--remaining`: Show only the remaining materials
+- `--storage <capacity>`: Set storage capacity (integer)
+- `--output <formats>`: Set output formats (comma-separated: `block,flow`)
 
-### Text File Parser
-This is made to work with any type of file, as long as it meets the following requirements:
- - Use a ` - <Item Name>: <Item Count>` format for each item
- - Include a `Cargo Space: X` anywhere in the file. X should be the amount of space available for each trip.
+### Read Text File
+```bash
+java -jar BinPacker.jar <file> [options]
+```
 
-Run it using: <br>
-```$ java -jar BinPacker.jar LIST.txt```
-Replace `LIST.txt` with the file containing your list.
+**Options**
+- `--output <formats>`: Set output formats (comma-separated: `block,flow`)
 
 
 ## Output Formats
-There are currently only two styles available: "flow" and "block"
+- `block`: Presents all information required to complete every single trip in a human-readable format.
+- `flow`: Presents minimal information on runs while preserving list structure.
 
-### Block Style
-The style with the most info is "block".
+<!-- Leaving this info here until I figure out how to organize the wiki... -->
+### Block Format
+The format with the most info is "block".
 It shows each run and how much of each item is used in the runs.
 It provides all the necessary information to complete all the trips. <br>
 Here is an example of how a run would look in "block".
@@ -48,10 +51,11 @@ It tells you:
  - What is left over from the final item
  - How much of each item is in the run
 
-### Flow Style
-The other style is "flow".
-It trades in all the info for a simple list showing groupings of items and where the remainders go. <br>
-Below is an example of how the "flow" style looks.
+<!-- I may need to update this explanation in the future because it is a _bit_ hard to read -->
+### Flow Format
+The other format is "flow".
+It trades in all the info for a simple list showing groupings of items.<br>
+Below is an example of how the "flow" format looks.
 ```
  - Non-Lethal Weapons             33 \
  - Medical Diagnostic Equipment   48  \

@@ -21,6 +21,12 @@ public class Formatter {
         }
     }
 
+    /**
+     * Calls the correct writer
+     * @param outputType Style wanted [block, flow]
+     * @param runs All the runs required
+     * @param fullList All the materials ordered from least to greatest
+     */
     public void writeRunsToFile(String outputType, List<Run> runs, List<Map.Entry<String,Integer>> fullList) {
         switch (outputType) {
             case "flow":
@@ -29,12 +35,73 @@ public class Formatter {
             case "block":
                 writeBlockRuns(runs);
                 break;
+            // TODO: Create a JSON output for easier integration with others
             default:
                 writeBlockRuns(runs);
                 break;
         }
     }
 
+    /**
+     * Writes all the runs into their own blocks to give as much information to
+     * the user as possible
+     * 
+     * @param runs List of all the runs required
+     */
+    public void writeBlockRuns(List<Run> runs) {
+        try {
+            writer = new FileWriter("BlockRuns.txt");
+
+            for (Run run : runs) {
+                String currBlock = "";
+                if (run.isFull()) {
+                    // A FULL run
+                    if (run.getRunRemainder() > 0) {
+                        currBlock += String.format("\nRun %d-%d (%d):    (Remainder: %d)\n",
+                            run.getRunStartNumber(),
+                            run.getRunEndNumber(),
+                            run.getTotalUsed(),
+                            run.getRunRemainder());
+                    } else {
+                        currBlock += String.format("\nRun %d-%d (%d):\n",
+                            run.getRunStartNumber(),
+                            run.getRunEndNumber(),
+                            run.getTotalUsed());
+                    }
+                } else {
+                    // A non-FULL run (possibly remainder run?)
+                    if (run.getRunRemainder() > 0) {
+                        currBlock += String.format("\nRun %d (%d):    (Remainder: %d)\n",
+                            run.getRunStartNumber(),
+                            run.getTotalUsed(),
+                            run.getRunRemainder());
+                    } else {
+                        currBlock += String.format("\nRun %d (%d):\n",
+                            run.getRunStartNumber(),
+                            run.getTotalUsed());
+                    }
+                }
+                int maxNameSize = run.getLargestNameSize();
+                for (RunItem item : run.getItems()) {
+                    currBlock += String.format("  - %-"+maxNameSize+"s %d\n",
+                        item.getName(),
+                        item.getQuantity());
+                }
+                writer.write(currBlock);
+            }
+            writer.close();
+        } catch (IOException e) {
+            System.err.println("We recieved an error while trying to write to the file.");
+            System.err.println(e);
+            System.exit(0);
+        }
+    }
+
+    /**
+     * Writes all the runs on top of the ordered list of all the materials
+     * @param runs List of all the runs required
+     * @param fullList All the materials ordered from least to greatest
+     */
     public void writeFlowRuns(List<Run> runs, List<Map.Entry<String,Integer>> fullList) {
         int itemIndex = 0;
         boolean dontRepeat = false;
@@ -176,52 +243,4 @@ public class Formatter {
         }
     }
 
-    public void writeBlockRuns(List<Run> runs) {
-        try {
-            writer = new FileWriter("BlockRuns.txt");
-
-            for (Run run : runs) {
-                String currBlock = "";
-                if (run.isFull()) {
-                    // A FULL run
-                    if (run.getRunRemainder() > 0) {
-                        currBlock += String.format("\nRun %d-%d (%d):    (Remainder: %d)\n",
-                            run.getRunStartNumber(),
-                            run.getRunEndNumber(),
-                            run.getTotalUsed(),
-                            run.getRunRemainder());
-                    } else {
-                        currBlock += String.format("\nRun %d-%d (%d):\n",
-                            run.getRunStartNumber(),
-                            run.getRunEndNumber(),
-                            run.getTotalUsed());
-                    }
-                } else {
-                    // A non-FULL run (possibly remainder run?)
-                    if (run.getRunRemainder() > 0) {
-                        currBlock += String.format("\nRun %d (%d):    (Remainder: %d)\n",
-                            run.getRunStartNumber(),
-                            run.getTotalUsed(),
-                            run.getRunRemainder());
-                    } else {
-                        currBlock += String.format("\nRun %d (%d):\n",
-                            run.getRunStartNumber(),
-                            run.getTotalUsed());
-                    }
-                }
-                int maxNameSize = run.getLargestNameSize();
-                for (RunItem item : run.getItems()) {
-                    currBlock += String.format("  - %-"+maxNameSize+"s %d\n",
-                        item.getName(),
-                        item.getQuantity());
-                }
-                writer.write(currBlock);
-            }
-            writer.close();
-        } catch (IOException e) {
-            System.err.println("We recieved an error while trying to write to the file.");
-            System.err.println(e);
-            System.exit(0);
-        }
-    }
 }

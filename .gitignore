@@ -1,1 +1,9 @@
 .vscode/
+calculator/*.class
+formatter/*.class
+parser/jsonFiles/*.class
+parser/txtFiles/*.class
+routing/*.class
+*.txt
+*.class
+BinPacker.jar
