@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class journalFinder {
+public class JournalFinder {
     final static String regex = "Journal\\.(\\d{4}-\\d{2}-\\d{2})T(\\d{6}).(\\d{2}).log";
     final static Pattern pattern = Pattern.compile(regex);
     final static String journalDir = System.getProperty("user.home") + "\\Saved Games\\Frontier Developments\\Elite Dangerous";

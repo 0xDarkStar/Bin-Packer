@@ -1,3 +1,4 @@
+.github/
 .vscode/
 calculator/*.class
 formatter/*.class
@@ -6,4 +7,4 @@ parser/txtFiles/*.class
 routing/*.class
 *.txt
 *.class
-BinPacker.jar
+*.jar

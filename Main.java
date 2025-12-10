@@ -6,7 +6,7 @@ import calculator.Run;
 import calculator.RunCalculator;
 import formatter.Formatter;
 import parser.jsonFiles.JSONparser;
-import parser.txtFiles.txtParser;
+import parser.txtFiles.TXTparser;
 
 public class Main {
     static boolean readLogs = false;
@@ -25,7 +25,7 @@ public class Main {
             HashMap<String, Integer> list = organizer.findListInJournal(useRemaining);
             orderedList = organizer.sortList(list);
         } else { // Read the file given
-            txtParser organizer = new txtParser();
+            TXTparser organizer = new TXTparser();
             HashMap<String, Integer> list = organizer.getListFromFile(fileName);
             orderedList = organizer.sortList(list);
             storage = organizer.storageSpace;

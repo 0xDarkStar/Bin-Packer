@@ -22,7 +22,7 @@ public class JSONparser {
         while (notFound) {
             String check = "";
             try {
-                File latestFile = journalFinder.findLatestJournal(ignored);
+                File latestFile = JournalFinder.findLatestJournal(ignored);
                 check = findNewestDepot(latestFile);
                 if (check == null) {
                     ignored.add(latestFile.getName());

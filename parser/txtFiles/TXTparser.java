@@ -12,7 +12,7 @@ import java.util.Map;
  *  - <Item Name> <Item Count (Integer)>
  */
 
-public class txtParser {
+public class TXTparser {
     public int storageSpace;
     public HashMap<String, Integer> getListFromFile(String fileName) {
         HashMap<String, Integer> itemList = new HashMap<>();
