@@ -6,6 +6,8 @@ public class Router {
         // Create extremely simple route with greedy algorithm
         // TODO: Use a better algorithm to create the route
         int[] route = findRoute(dists);
+        // Optimize the route
+        route = optimizeRoute(route, dists);
         return route;
     }
 
@@ -15,16 +17,20 @@ public class Router {
 
         for (int i=0; i<sysCount; i++) {
             for (int j=0; j<sysCount; j++) {
-                double xA = inputSys[i][0], yA = inputSys[i][1], zA = inputSys[i][2];
-                double xB = inputSys[j][0], yB = inputSys[j][1], zB = inputSys[j][2];
-                // d = sqrt((xB-xA)^2 + (yB-yA)^2 + (zB-zA)^2)
-                double distFromSys = Math.sqrt(Math.pow(xB-xA, 2) + Math.pow(yB-yA, 2) + Math.pow(zB-zA, 2));
-                // Round up to second place
-                distFromSys = Math.floor(distFromSys*100)/100;
-                distances[i][j] = distFromSys;
+                distances[i][j] = pointDelta(inputSys[i], inputSys[j]);
             }
         }
         return distances;
+    }
+
+    static double pointDelta(double[] pointA, double[] pointB) {
+        double xA = pointA[0], yA = pointA[1], zA = pointA[2];
+        double xB = pointB[0], yB = pointB[1], zB = pointB[2];
+        // d = sqrt((xB-xA)^2 + (yB-yA)^2 + (zB-zA)^2)
+        double distFromSys = Math.sqrt(Math.pow(xB-xA, 2) + Math.pow(yB-yA, 2) + Math.pow(zB-zA, 2));
+        // Round up to second place
+        distFromSys = Math.floor(distFromSys*100)/100;
+        return distFromSys;
     }
 
     static int[] findRoute(double[][] distances) {
@@ -60,5 +66,54 @@ public class Router {
             }
         }
         return false;
+    }
+
+    static int[] optimizeRoute(int[] route, double[][] distances) {
+        int prevCost = determineCost(route, distances);
+        int currCost;
+        int[] improvedRoute;
+        boolean improved = true;
+        while(improved) {
+            improved = false; // If we don't improve it, it stops
+            for (int i = 1; i<route.length-3; i++) {
+                for (int j = i+1; j <= route.length-2; j++) {
+                    improvedRoute = reverseSection(route, i, j);
+                    currCost = determineCost(improvedRoute, distances);
+                    if (currCost < prevCost) {
+                        route = improvedRoute.clone();
+                        prevCost = currCost;
+                        improved = true; // AGAIN
+                    }
+                }
+            }
+        }
+        return route;
+    }
+
+    static int determineCost(int[] route, double[][] distances) {
+        int cost = 0;
+        for (int i = 0; i<route.length-1; i++) {
+            cost += distances[route[i]][route[i+1]];
+        }
+        return cost;
+    }
+
+    static int[] reverseSection(int[] route, int start, int end) {
+        int[] newRoute = route.clone();
+        while (start < end) {
+            int valueHold = newRoute[start];
+            newRoute[start] = newRoute[end];
+            newRoute[end] = valueHold;
+            start++;
+            end--;
+        }
+        return newRoute;
+    }
+
+    static void printRoute(int[] route) {
+        for (int i : route) {
+            System.out.print(i+" ");
+        }
+        System.out.println();
     }
 }

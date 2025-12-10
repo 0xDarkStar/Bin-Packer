@@ -21,6 +21,10 @@ public class Main {
         handleIn(args);
 
         if (readLogs) { // Read through the journals
+            if (storage == 0) {
+                System.err.println("Error: A storage quantity needs to be provided.");
+                System.exit(1);
+            }
             JSONparser organizer = new JSONparser();
             HashMap<String, Integer> list = organizer.findListInJournal(useRemaining);
             orderedList = organizer.sortList(list);
@@ -66,6 +70,7 @@ public class Main {
                         i++; // Storage capacity grabbed, SKIP
                     } else {
                         System.err.println("Error: --storage requires a value");
+                        System.exit(1);
                     }
                     break;
                 case "--output":
@@ -74,8 +79,20 @@ public class Main {
                         i++; // Desired output types grabbed, SKIP
                     } else {
                         System.err.println("Error: --output requires a value");
+                        System.exit(1);
                     }
                     break;
+                case "--help":
+                    System.out.println("All available options for Bin Packer:");
+                    System.out.println("  --readlogs");
+                    System.out.println("      Read the Elite Dangerous journals for the last construction depot visited.");
+                    System.out.println("  --storage <capacity>");
+                    System.out.println("      Define the storage capacity of the vessel.");
+                    System.out.println("  --remaining");
+                    System.out.println("      Make runs using ONLY the remaining materials.");
+                    System.out.println("  --output <formats>");
+                    System.out.println("      Select the format(s) that are to be outputted. Formats must be separated by commas and NO spaces.");
+                    System.out.println("      Formats: block, float");
                 default:
                     fileName = args[i];
                     break;
