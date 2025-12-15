@@ -17,6 +17,8 @@ java -jar BinPacker.jar --readlogs [options]
 - `--remaining`: Show only the remaining materials
 - `--storage <capacity>`: Set storage capacity (integer)
 - `--output <formats>`: Set output formats (comma-separated: `block,flow`)
+- `--createroutes`: Create routes to be followed for each material
+- `--searchradius`: Set the search radius in LY
 
 ### Read Text File
 ```bash
@@ -78,3 +80,6 @@ If a run that uses multiple items has a remainder, a `\` is added at the end to 
 If a run that uses one item has a remainder, it uses a `\` instead of `>` to show the remainder flowing over to the next run. <br>
 As you can tell, Flow does not say how much of each item to use.
 Instead, it only lists how many runs are needed, how full each run is, and if a run has a remainder.
+
+### Route Format
+TO BE COMPLETED

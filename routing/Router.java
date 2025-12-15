@@ -1,10 +1,14 @@
 package routing;
 
 public class Router {
+    /**
+     * Search for the best route
+     * @param inputSys Systems to route through
+     * @return Optimized route through all systems
+     */
     static int[] beginRouting(double[][] inputSys) {
         double[][] dists = createDistanceTable(inputSys);
         // Create extremely simple route with greedy algorithm
-        // TODO: Use a better algorithm to create the route
         int[] route = findRoute(dists);
         // Optimize the route
         route = optimizeRoute(route, dists);

@@ -1,9 +1,15 @@
 package formatter;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import calculator.Run;
 import calculator.RunItem;
+
+import sources.SystemInfo;
+import sources.Station;
+import routing.Router;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -241,6 +247,13 @@ public class Formatter {
             System.err.println(e);
             System.exit(0);
         }
+    }
+
+    public void writeRoutes(List<Run> runs, ArrayList<SystemInfo> systems) {
+        // Find stations required for run
+        // Create route for run (use the router)
+        // Print route
+        // How...
     }
 
 }

@@ -1,22 +1,32 @@
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import calculator.Run;
 import calculator.RunCalculator;
+
 import formatter.Formatter;
+
+import parser.jsonFiles.DepotInfo;
 import parser.jsonFiles.JSONparser;
 import parser.txtFiles.TXTparser;
+
+import sources.SourceFinder;
+import sources.SystemInfo;
 
 public class Main {
     static boolean readLogs = false;
     static boolean useRemaining = false;
+    static boolean createRoutes = false;
+    static int searchRadius = 50; // 50 LY search radius default
     static String[] outputTypes = {};
     static int storage = 0;
     static String fileName = "";
 
     public static void main(String[] args) {
         List<Map.Entry<String,Integer>> orderedList;
+        ArrayList<SystemInfo> sources = new ArrayList<>(); // Make the Java compiler happy
 
         handleIn(args);
 
@@ -26,8 +36,12 @@ public class Main {
                 System.exit(1);
             }
             JSONparser organizer = new JSONparser();
-            HashMap<String, Integer> list = organizer.findListInJournal(useRemaining);
-            orderedList = organizer.sortList(list);
+            DepotInfo depot = organizer.findListInJournal(useRemaining);
+            orderedList = organizer.sortList(depot.getMatList());
+            if (createRoutes) {
+                SourceFinder searcher = new SourceFinder();
+                sources = searcher.searchForSources(depot, 50);
+            }
         } else { // Read the file given
             TXTparser organizer = new TXTparser();
             HashMap<String, Integer> list = organizer.getListFromFile(fileName);
@@ -49,6 +63,10 @@ public class Main {
                 System.out.println("Writing "+type+" file.");
                 output.writeRunsToFile(type, allRuns, orderedList);
             }
+        }
+        if (createRoutes) {
+            // TODO: Complete writeRoutes in the formatter
+            output.writeRoutes(allRuns, sources);
         }
     }
 
@@ -82,6 +100,17 @@ public class Main {
                         System.exit(1);
                     }
                     break;
+                case "--createroutes":
+                    createRoutes = true;
+                    break;
+                case "--searchradius":
+                    if (i+1 < args.length) {
+                        searchRadius = Integer.parseInt(args[i+1]);
+                        i++;
+                    } else {
+                        System.err.println("Error: --searchRadius requires a value");
+                        System.exit(1);
+                    }
                 case "--help":
                     System.out.println("All available options for Bin Packer:");
                     System.out.println("  --readlogs");
@@ -93,6 +122,12 @@ public class Main {
                     System.out.println("  --output <formats>");
                     System.out.println("      Select the format(s) that are to be outputted. Formats must be separated by commas and NO spaces.");
                     System.out.println("      Formats: block, float");
+                    System.out.println("  --createroutes");
+                    System.out.println("      Search for all nearby sources and create routes to follow");
+                    System.out.println("  --searchradius <radius>");
+                    System.out.println("      Set the search radius in LY.");
+                    System.exit(0);
+                    break;
                 default:
                     fileName = args[i];
                     break;
