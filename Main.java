@@ -20,6 +20,7 @@ public class Main {
     static boolean useRemaining = false;
     static boolean createRoutes = false;
     static int searchRadius = 50; // 50 LY search radius default
+    static String journalDir = "";
     static String[] outputTypes = {};
     static int storage = 0;
     static String fileName = "";
@@ -36,11 +37,11 @@ public class Main {
                 System.exit(1);
             }
             JSONparser organizer = new JSONparser();
-            DepotInfo depot = organizer.findListInJournal(useRemaining);
+            DepotInfo depot = organizer.findListInJournal(useRemaining, journalDir);
             orderedList = organizer.sortList(depot.getMatList());
             if (createRoutes) {
                 SourceFinder searcher = new SourceFinder();
-                sources = searcher.searchForSources(depot, 50);
+                sources = searcher.searchForSources(depot, searchRadius);
             }
         } else { // Read the file given
             TXTparser organizer = new TXTparser();
@@ -111,10 +112,22 @@ public class Main {
                         System.err.println("Error: --searchRadius requires a value");
                         System.exit(1);
                     }
+                    break;
+                case "--journaldir":
+                    if (i+1 < args.length) {
+                        journalDir = args[i+1];
+                        i++;
+                    } else {
+                        System.err.println("Error: --journaldir requires a path");
+                        System.exit(1);
+                    }
+                    break;
                 case "--help":
                     System.out.println("All available options for Bin Packer:");
                     System.out.println("  --readlogs");
                     System.out.println("      Read the Elite Dangerous journals for the last construction depot visited.");
+                    System.out.println("  --journaldir <path>");
+                    System.out.println("      Define the path to your journals.");
                     System.out.println("  --storage <capacity>");
                     System.out.println("      Define the storage capacity of the vessel.");
                     System.out.println("  --remaining");

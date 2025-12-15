@@ -1,6 +1,7 @@
 package formatter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -254,6 +255,28 @@ public class Formatter {
         // Create route for run (use the router)
         // Print route
         // How...
+        // Hashmaps used to link materials to their locations
+        HashMap<String,String> matLocation = new HashMap<>(); // {<Material Name>, <System Name, Station Name>} (Printing)
+        HashMap<String,SystemInfo> matSystem = new HashMap<>(); // {<Material Name>, <System>} (Organization of materials)
+
+        for (SystemInfo currSys : systems) {
+            System.out.println();
+            for (Station currStat : currSys.getStations()) {
+                String[] contained = currStat.getMaterialsContained();
+                // Some stations may not have any materials assigned
+                if (contained == null) {
+                    continue;
+                }
+                String location = currSys.getName()+", "+currStat.getName();
+                for (String material : contained) {
+                    if (material == null) continue;
+                    // Link the materials to systems
+                    matLocation.put(material, location);
+                    matSystem.put(material, currSys);
+                    System.out.println(material+" is found in "+location);
+                }
+            }
+        }
     }
 
 }

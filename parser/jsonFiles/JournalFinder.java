@@ -10,7 +10,14 @@ import java.util.regex.Pattern;
 public class JournalFinder {
     final static String regex = "Journal\\.(\\d{4}-\\d{2}-\\d{2})T(\\d{6}).(\\d{2}).log";
     final static Pattern pattern = Pattern.compile(regex);
-    final static String journalDir = System.getProperty("user.home") + "\\Saved Games\\Frontier Developments\\Elite Dangerous";
+    // Allow for changing of journalDir
+    static String journalDir = System.getProperty("user.home") + "\\Saved Games\\Frontier Developments\\Elite Dangerous";
+
+    public static File findLatestJournal(List<String> ignored, String newJournalDir) {
+        journalDir = newJournalDir; // updated journalDir to custom journal directory
+        File latestFile = findLatestJournal(ignored);
+        return latestFile;
+    }
 
     public static File findLatestJournal(List<String> ignored) {
         File dir = new File(journalDir);

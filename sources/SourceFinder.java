@@ -6,6 +6,7 @@ import parser.jsonFiles.DepotInfo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.net.http.*;
 import java.io.IOException;
@@ -15,9 +16,9 @@ public class SourceFinder {
     // Oh how I love regex...
     private final String systemSearchRegex ="\"name\":\"([\\w\\s-]*)\",\"mainstar\":\"(?:[\\w\\s\\(\\)-]*)\",\"coords\":\\{\"x\":([\\d.-]*),\"y\":([\\d.-]*),\"z\":([\\d.-]*)";
     //                                  System name grabbed ^                      Ignore Star ^           System (x,y,z) grabbed   x ^              y ^              z ^
-    private final String stationInfoRegex = "\"marketId\":(\\d*),\"type\":\"([a-zA-Z\\s]*)\",\"name\":\"([a-zA-Z\\s]*)\"";
+    private final String stationInfoRegex = "\"marketId\":(\\d*),\"type\":\"([a-zA-Z\\s]*)\",\"name\":\"([a-zA-Z-\\s]*)\"";
     //                                     market ID grabbed ^    station type ^                Station Name ^
-    private final String stationMarketRegex = "\"id\":\"(?:[\\w\\s]*)\",\"name\":\"([\\w\\s-.]*)\",\"buyPrice\":(?:\\d*),\"stock\":(\\d*)";
+    private final String stationMarketRegex = "\"id\":\"(?:[\\w\\s]*)\",\"name\":\"([\\w\\s\\-\\.]*)\",\"buyPrice\":(?:\\d*),\"stock\":(\\d*)";
     //                                                            Material Name grabbed ^                      Material Stock grabbed ^
     Pattern systemPattern = Pattern.compile(systemSearchRegex);
     Pattern stationPattern = Pattern.compile(stationInfoRegex);
@@ -28,9 +29,13 @@ public class SourceFinder {
     HttpClient client = HttpClient.newHttpClient();
 
     public ArrayList<SystemInfo> searchForSources(DepotInfo depot, int searchRadius) {
+        System.out.println("Searching for source systems...");
         ArrayList<SystemInfo> systems = findAllSystems(depot.getSysPos(), searchRadius);
+        System.out.println("Searching for stations in systems...");
         systems = findStationsInSystems(systems);
+        System.out.println("Checking markets in stations...");
         systems = findMarkets(systems, depot.getMatList());
+        System.out.println("Search Complete!");
         return systems;
     }
 
@@ -88,7 +93,7 @@ public class SourceFinder {
     public ArrayList<SystemInfo> findStationsInSystems(ArrayList<SystemInfo> systems) {
         for (int i = 0; i<systems.size(); i++) {
             SystemInfo currSys = systems.get(i);
-            String sysName = currSys.getName().replace(" ", "+"); // Prep for use in URL
+            String sysName = currSys.getName().replace(" ", "%20"); // Prep for use in URL
             String url = "https://www.edsm.net/api-system-v1/stations?systemName="+sysName;
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -98,7 +103,14 @@ public class SourceFinder {
             ArrayList<Station> stations = new ArrayList<Station>();
             
             try {
+                TimeUnit.MILLISECONDS.sleep(500); // Wait half a second between requests to not hit the rate limit
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() == 429) {
+                    // Damn, too many...
+                    System.err.println("Warning: Too many requests. Waiting 1 Hour...");
+                    TimeUnit.HOURS.sleep(1);
+                    response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                }
                 // System.out.println("Status Code: "+response.statusCode());
                 // System.out.println("Body: "+response.body());
 
@@ -124,6 +136,7 @@ public class SourceFinder {
             } else {
                 // Add the stations to the current system
                 currSys.setStations(stations);
+                systems.set(i, currSys);
             }
         }
 
@@ -131,6 +144,15 @@ public class SourceFinder {
     }
 
     public ArrayList<SystemInfo> findMarkets(ArrayList<SystemInfo> systems, HashMap<String,Integer> reqMats) {
+        // Make all material names lowercase in the required material list
+        // This is because of liquid oxygen.
+        // In the journals it is "Liquid oxygen", but on EDSM it is "Liquid Oxygen"!
+        for (Object key : reqMats.keySet().toArray()) {
+            String matName = key.toString();
+            int tempNum = reqMats.get(matName);
+            reqMats.remove(matName);
+            reqMats.put(matName.toLowerCase(), tempNum);
+        }
         for (int i = 0; i < systems.size(); i++) {
             // Check currSys
             SystemInfo currSys = systems.get(i);
@@ -170,7 +192,7 @@ public class SourceFinder {
                 // Find what materials from the list the station has
                 String[] materials = doesMarketFulfillRequirement(marketStock, reqMats);
 
-                if (materials.length == 0) {
+                if (materials[0] == null) {
                     // No materials that are needed were found
                     stations.remove(j);
                     j--;
@@ -182,8 +204,8 @@ public class SourceFinder {
                     reqMats = updateMaterialList(materials, reqMats);
                     // Update station list in system
                     stations.set(j, currStat);
-                    currSys.setStations(stations);
                 }
+                currSys.setStations(stations); // update system's station list
 
                 if (reqMats.size() == 0) {
                     // All materials have been found, end the search
@@ -222,9 +244,9 @@ public class SourceFinder {
         for (int i = 0; i<market.size(); i++) {
             String currMat = market.keySet().toArray()[i].toString();
             // If the current material is one of the required materials
-            if (reqMats.containsKey(currMat)) {
+            if (reqMats.containsKey(currMat.toLowerCase())) {
                 long stock = market.get(currMat);
-                long reqStock = reqMats.get(currMat);
+                long reqStock = reqMats.get(currMat.toLowerCase()); // lowercase because EDSM
                 if (stock >= reqStock) {
                     // The current material has enough stock
                     materialsFulfilled[matCounter] = currMat;
@@ -238,7 +260,12 @@ public class SourceFinder {
     public HashMap<String,Integer> updateMaterialList(String[] matsToRemove, HashMap<String,Integer> materialList) {
         // Remove all the materials we found
         for (String material : matsToRemove) {
-            materialList.remove(material);
+            // `matsToRemove` may contain null entries if the array was only
+            // partially filled in `doesMarketFulfillRequirement`, so skip them.
+            if (material == null) {
+                continue;
+            }
+            materialList.remove(material.toLowerCase());
         }
         return materialList;
     }

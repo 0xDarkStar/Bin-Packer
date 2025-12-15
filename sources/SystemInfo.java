@@ -16,36 +16,36 @@ public class SystemInfo {
     }
 
     // Getters
-    String getName() {
+    public String getName() {
         return this.name;
     }
 
-    int getId() {
+    public int getId() {
         return this.id;
     }
 
-    double[] getSystemPosition() {
+    public double[] getSystemPosition() {
         return this.sysPos;
     }
 
-    ArrayList<Station> getStations() {
+    public ArrayList<Station> getStations() {
         return this.stations;
     }
 
     // Setters
-    void setNewName(String newName) {
+    public void setNewName(String newName) {
         this.name = newName;
     }
 
-    void setNewId(int newId) {
+    public void setNewId(int newId) {
         this.id = newId;
     }
 
-    void setSystemPosition(double[] newSystemPosition) {
+    public void setSystemPosition(double[] newSystemPosition) {
         this.sysPos = newSystemPosition;
     }
 
-    void setStations(ArrayList<Station> newStations) {
+    public void setStations(ArrayList<Station> newStations) {
         this.stations = newStations;
     }
 }

@@ -16,16 +16,21 @@ public class JSONparser {
     final Pattern materialPattern = Pattern.compile(materialRegex);
     final Pattern posPattern = Pattern.compile(posRegex);
 
-    public DepotInfo findListInJournal(boolean useRemaining) {
+    public DepotInfo findListInJournal(boolean useRemaining, String newJournalDir) {
         HashMap<String, Integer> itemList = new HashMap<>();
         DepotInfo depot = new DepotInfo(itemList, null);
         boolean notFound = true;
         List<String> ignored = new ArrayList<>();
-        System.out.println("Searching...");
+        System.out.println("Searching for depot in journals...");
         while (notFound) {
             String check[] = {"",""};
             try {
-                File latestFile = JournalFinder.findLatestJournal(ignored);
+                File latestFile;
+                if (newJournalDir.length() != 0) {
+                    latestFile = JournalFinder.findLatestJournal(ignored, newJournalDir);
+                } else {
+                    latestFile = JournalFinder.findLatestJournal(ignored);
+                }
                 check = findNewestDepot(latestFile);
                 if (check == null) {
                     ignored.add(latestFile.getName());
@@ -77,6 +82,7 @@ public class JSONparser {
 
                     if (currLine.contains("\"event\":\"ColonisationConstructionDepot\"")) {
                         outLines[0] = currLine;
+                        depotFound = true;
                     }
                     line = new StringBuilder();
                 } else if ((c == '\n' || pointer == 0) && depotFound) {

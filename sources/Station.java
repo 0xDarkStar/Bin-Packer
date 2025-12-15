@@ -18,52 +18,52 @@ public class Station {
     }
 
     // Getters
-    String getName() {
+    public String getName() {
         return this.name;
     }
 
-    String getType() {
+    public String getType() {
         return this.type;
     }
 
-    long getMarketId() {
+    public long getMarketId() {
         return this.marketID;
     }
 
-    HashMap<String,Long> getMarket() {
+    public HashMap<String,Long> getMarket() {
         return this.market;
     }
 
-    String getLargestPad() {
+    public String getLargestPad() {
         return this.largestPad;
     }
 
-    String[] getMaterialsContained() {
+    public String[] getMaterialsContained() {
         return this.materialsContained;
     }
 
     // Setters
-    void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
-    void setType(String type) {
+    public void setType(String type) {
         this.type = type;
     }
 
-    void setMarketId(long marketID) {
+    public void setMarketId(long marketID) {
         this.marketID = marketID;
     }
 
-    void setMarket(HashMap<String,Long> market) {
+    public void setMarket(HashMap<String,Long> market) {
         this.market = market;
     }
 
-    void setLargestPad(String largestPad) {
+    public void setLargestPad(String largestPad) {
         this.largestPad = largestPad;
     }
 
-    void setMaterialsContained(String[] newMaterials) {
+    public void setMaterialsContained(String[] newMaterials) {
         this.materialsContained = newMaterials;
     }
 }
