@@ -1,5 +1,6 @@
 package calculator;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -112,7 +113,8 @@ public class RunCalculator {
         // Clean up any remainders we may have
         if (currItemCount > 0 || prevRemainder > 0) {
             currItemCount += prevRemainder;
-            currRunItems.addAll(remainderRunItems);
+            // Merge items from both lists, combining quantities for items with the same name
+            currRunItems = mergeRunItems(currRunItems, remainderRunItems);
             int fullRunsNeeded = (currItemCount/maxCargo)-1;
             if (fullRunsNeeded < 0) {
                 fullRunsNeeded = 0;
@@ -128,5 +130,36 @@ public class RunCalculator {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Merges two lists of RunItems, combining quantities for items with the same name
+     * @param list1 First list of RunItems
+     * @param list2 Second list of RunItems
+     * @return Merged list with combined quantities for duplicate items
+     */
+    private List<RunItem> mergeRunItems(List<RunItem> list1, List<RunItem> list2) {
+        HashMap<String, Integer> mergedQuantities = new HashMap<>();
+        
+        // Add all items from first list
+        for (RunItem item : list1) {
+            String name = item.getName();
+            mergedQuantities.put(name, mergedQuantities.getOrDefault(name, 0) + item.getQuantity());
+        }
+        
+        // Add all items from second list, combining with existing quantities
+        for (RunItem item : list2) {
+            String name = item.getName();
+            if (mergedQuantities.containsKey(name)) continue; // Skip if key is there
+            mergedQuantities.put(name, mergedQuantities.getOrDefault(name, 0) + item.getQuantity());
+        }
+        
+        // Convert back to list of RunItems
+        List<RunItem> mergedList = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : mergedQuantities.entrySet()) {
+            mergedList.add(new RunItem(entry.getKey(), entry.getValue()));
+        }
+        
+        return mergedList;
     }
 }

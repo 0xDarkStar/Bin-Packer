@@ -11,18 +11,26 @@ import java.util.regex.*;
 
 public class JSONparser {
 
-    final String regex = "\"Name_Localised\":\"([\\w\\s.]+)+\", \"RequiredAmount\":(\\d+)+, \"ProvidedAmount\":(\\d+)+";
-    final Pattern pattern = Pattern.compile(regex);
+    final String materialRegex = "\"Name_Localised\":\"([\\w\\s.]+)+\", \"RequiredAmount\":(\\d+)+, \"ProvidedAmount\":(\\d+)+";
+    final String posRegex = "\"StarPos\":\\[([\\d|.|\\-]+),([\\d|.|\\-]+),([\\d|.|\\-]+)\\]";
+    final Pattern materialPattern = Pattern.compile(materialRegex);
+    final Pattern posPattern = Pattern.compile(posRegex);
 
-    public HashMap<String, Integer> findListInJournal(boolean useRemaining) {
+    public DepotInfo findListInJournal(boolean useRemaining, String newJournalDir) {
         HashMap<String, Integer> itemList = new HashMap<>();
+        DepotInfo depot = new DepotInfo(itemList, null);
         boolean notFound = true;
         List<String> ignored = new ArrayList<>();
-        System.out.println("Searching...");
+        System.out.println("Searching for depot in journals...");
         while (notFound) {
-            String check = "";
+            String check[] = {"",""};
             try {
-                File latestFile = journalFinder.findLatestJournal(ignored);
+                File latestFile;
+                if (newJournalDir.length() != 0) {
+                    latestFile = JournalFinder.findLatestJournal(ignored, newJournalDir);
+                } else {
+                    latestFile = JournalFinder.findLatestJournal(ignored);
+                }
                 check = findNewestDepot(latestFile);
                 if (check == null) {
                     ignored.add(latestFile.getName());
@@ -31,8 +39,8 @@ public class JSONparser {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            Matcher matcher = pattern.matcher(check);
 
+            Matcher matcher = materialPattern.matcher(check[0]);
             while(matcher.find()) {
                 String name = matcher.group(1);
                 int required = Integer.parseInt(matcher.group(2)); // Use if provided is ignored
@@ -41,13 +49,25 @@ public class JSONparser {
                 if (useRemaining) itemList.put(name, remaining);
                 else itemList.put(name, required);
             }
+            depot.setMatList(itemList);
+
+            matcher = posPattern.matcher(check[1]);
+            while(matcher.find()) {
+                double x = Double.parseDouble(matcher.group(1));
+                double y = Double.parseDouble(matcher.group(2));
+                double z = Double.parseDouble(matcher.group(3));
+                depot.setSysPos(new double[] {x,y,z});
+            }
+
             notFound = false;
         }
-        return itemList;
+        return depot;
     }
 
-    public String findNewestDepot(File currFile) throws IOException {
+    public String[] findNewestDepot(File currFile) throws IOException {
         try (RandomAccessFile file = new RandomAccessFile(currFile, "r")) {
+            boolean depotFound = false;
+            String[] outLines = {"",""};
             long fileLength = file.length();
             StringBuilder line = new StringBuilder();
 
@@ -57,11 +77,20 @@ public class JSONparser {
                 file.seek(pointer);
                 char c = (char) file.read();
 
-                if (c == '\n' || pointer == 0) {
+                if ((c == '\n' || pointer == 0) && !depotFound) {
                     String currLine = line.reverse().toString().trim();
 
                     if (currLine.contains("\"event\":\"ColonisationConstructionDepot\"")) {
-                        return currLine;
+                        outLines[0] = currLine;
+                        depotFound = true;
+                    }
+                    line = new StringBuilder();
+                } else if ((c == '\n' || pointer == 0) && depotFound) {
+                    String currLine = line.reverse().toString().trim();
+
+                    if (currLine.contains("\"StarPos\":[")) {
+                        outLines[1] = currLine;
+                        return outLines;
                     }
                     line = new StringBuilder();
                 } else {
