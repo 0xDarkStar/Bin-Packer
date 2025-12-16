@@ -11,7 +11,7 @@ import java.util.regex.*;
 
 public class JSONparser {
 
-    final String materialRegex = "\"Name_Localised\":\"([\\w\\s.]+)+\", \"RequiredAmount\":(\\d+)+, \"ProvidedAmount\":(\\d+)+";
+    final String materialRegex = "\"Name_Localised\":\"([\\w\\s.\\-]+)+\", \"RequiredAmount\":(\\d+)+, \"ProvidedAmount\":(\\d+)+";
     final String posRegex = "\"StarPos\":\\[([\\d|.|\\-]+),([\\d|.|\\-]+),([\\d|.|\\-]+)\\]";
     final Pattern materialPattern = Pattern.compile(materialRegex);
     final Pattern posPattern = Pattern.compile(posRegex);
