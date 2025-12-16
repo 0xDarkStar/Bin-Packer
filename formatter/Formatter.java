@@ -7,7 +7,7 @@ import java.util.Map;
 
 import calculator.Run;
 import calculator.RunItem;
-
+import parser.jsonFiles.DepotInfo;
 import sources.SystemInfo;
 import sources.Station;
 import routing.Router;
@@ -250,7 +250,7 @@ public class Formatter {
         }
     }
 
-    public void writeRoutes(List<Run> runs, ArrayList<SystemInfo> systems) {
+    public void writeRoutes(List<Run> runs, ArrayList<SystemInfo> systems, DepotInfo depot) {
         // Find stations required for run
         // Create route for run (use the router)
         // Print route
@@ -258,24 +258,103 @@ public class Formatter {
         // Hashmaps used to link materials to their locations
         HashMap<String,String> matLocation = new HashMap<>(); // {<Material Name>, <System Name, Station Name>} (Printing)
         HashMap<String,SystemInfo> matSystem = new HashMap<>(); // {<Material Name>, <System>} (Organization of materials)
+        try {
+            writer = new FileWriter("Route.txt");
 
-        for (SystemInfo currSys : systems) {
-            System.out.println();
-            for (Station currStat : currSys.getStations()) {
-                String[] contained = currStat.getMaterialsContained();
-                // Some stations may not have any materials assigned
-                if (contained == null) {
-                    continue;
-                }
-                String location = currSys.getName()+", "+currStat.getName();
-                for (String material : contained) {
-                    if (material == null) continue;
-                    // Link the materials to systems
-                    matLocation.put(material, location);
-                    matSystem.put(material, currSys);
-                    System.out.println(material+" is found in "+location);
+            for (SystemInfo currSys : systems) {
+                for (Station currStat : currSys.getStations()) {
+                    String[] contained = currStat.getMaterialsContained();
+                    // Some stations may not have any materials assigned
+                    if (contained == null) {
+                        continue;
+                    }
+                    String location = currSys.getName()+", "+currStat.getName();
+                    for (String material : contained) {
+                        if (material == null) continue;
+                        // Link the materials to systems
+                        matLocation.put(material.toLowerCase(), location);
+                        matSystem.put(material.toLowerCase(), currSys);
+                    }
                 }
             }
+            
+            for (Run trip : runs) {
+                double[][] systemCoords = new double[trip.getItems().size()+1][3]; // Used to create distance tables
+                systemCoords[0] = depot.getSysPos();
+                int counter = 1;
+                for (RunItem material : trip.getItems()) {
+                    SystemInfo system = matSystem.get(material.getName().toLowerCase());
+                    if (system == null) {
+                        // Skip items that do not have a mapped system; prevents NPEs
+                        continue;
+                    }
+                    double[] individCoords = system.getSystemPosition();
+                    systemCoords[counter][0] = individCoords[0]; // X
+                    systemCoords[counter][1] = individCoords[1]; // Y
+                    systemCoords[counter][2] = individCoords[2]; // Z
+                    counter++;
+                }
+        
+                int[] route = Router.beginRouting(systemCoords);
+
+                RunItem[] materialRoute = new RunItem[route.length]; // The materials we pick up in order
+                materialRoute[0] = null; // Depot Start
+                materialRoute[route.length-1] = null; // Depot End
+                for (int i = 0; i<trip.getItems().size(); i++) {
+                    int indexSearch = route[i+1]-1;
+                    RunItem material = trip.getItems().get(indexSearch);
+                    materialRoute[i+1] = material;
+                }
+
+                String currRoute = "";
+                boolean depotStart = false;
+                boolean multipleTrips = (trip.getRunEndNumber()-trip.getRunStartNumber() == 0) ? false : true;
+                boolean remainderFromTrip = (trip.getRunRemainder() == 0) ? true : false;
+                int tripCount = trip.getRunEndNumber()-trip.getRunStartNumber()+1;
+                String prevLocation = "";
+                for (RunItem material : materialRoute) {
+                    if (!depotStart) { // Run Info
+                        if (multipleTrips) {
+                            if (remainderFromTrip) {
+                                currRoute += "Runs "+trip.getRunStartNumber()+"-"+trip.getRunEndNumber()+" ("+trip.getTotalUsed()+"):\n";
+                            } else {
+                                currRoute += "Runs "+trip.getRunStartNumber()+"-"+trip.getRunEndNumber()+" ("+trip.getTotalUsed()+"): (Remainder: "+trip.getRunRemainder()+")\n";
+                            }
+                        } else {
+                            if (remainderFromTrip) {
+                                currRoute += "Run "+trip.getRunStartNumber()+" ("+trip.getTotalUsed()+"):\n";
+                            } else {
+                                currRoute += "Run "+trip.getRunStartNumber()+" ("+trip.getTotalUsed()+"): (Remainder: "+trip.getRunRemainder()+")\n";
+                            }
+                        }
+                        depotStart = true;
+                        continue; // This is the depot, don't process further
+                    }
+                    try {
+                        // No Error? We have a material
+                        String matName = material.getName();
+                        if (multipleTrips) {
+                            currRoute += "  Go to "+matLocation.get(matName.toLowerCase())+" and buy:\n";
+                            currRoute += "    - A full cargo hold of "+matName+" "+tripCount+" times\n";
+                        } else {
+                            if (prevLocation.equals(matLocation.get(matName.toLowerCase()))) {
+                                currRoute += "    - "+material.getQuantity()+" units of "+matName+"\n";
+                            } else {
+                                currRoute += "  Go to "+matLocation.get(matName.toLowerCase())+" and buy:\n";
+                                currRoute += "    - "+material.getQuantity()+" units of "+matName+"\n";
+                                prevLocation = matLocation.get(matName.toLowerCase());
+                            }
+                        }
+                    } catch (NullPointerException e) { // Error? We have the depot
+                        currRoute += "  Return to the depot and deposit all materials.\n\n";
+                    }
+                }
+                writer.write(currRoute);
+            }
+            writer.close();
+        } catch (IOException e) {
+            System.err.println("Error when writing route:");
+            e.printStackTrace();
         }
     }
 

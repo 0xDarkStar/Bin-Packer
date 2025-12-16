@@ -19,7 +19,7 @@ public class Main {
     static boolean readLogs = false;
     static boolean useRemaining = false;
     static boolean createRoutes = false;
-    static int searchRadius = 50; // 50 LY search radius default
+    static int searchRadius = 15; // 15 LY search radius default
     static String journalDir = "";
     static String[] outputTypes = {};
     static int storage = 0;
@@ -27,7 +27,8 @@ public class Main {
 
     public static void main(String[] args) {
         List<Map.Entry<String,Integer>> orderedList;
-        ArrayList<SystemInfo> sources = new ArrayList<>(); // Make the Java compiler happy
+        ArrayList<SystemInfo> sources = null; // Make the Java compiler happy
+        DepotInfo depot = null; // Make the Java compiler happy x2
 
         handleIn(args);
 
@@ -37,7 +38,7 @@ public class Main {
                 System.exit(1);
             }
             JSONparser organizer = new JSONparser();
-            DepotInfo depot = organizer.findListInJournal(useRemaining, journalDir);
+            depot = organizer.findListInJournal(useRemaining, journalDir);
             orderedList = organizer.sortList(depot.getMatList());
             if (createRoutes) {
                 SourceFinder searcher = new SourceFinder();
@@ -61,13 +62,15 @@ public class Main {
             output.writeBlockRuns(allRuns); // Might as well call directly
         } else {
             for (String type : outputTypes) {
+                type = type.toLowerCase();
+                if (type.equals("none")) break; // If none, don't output any normal format
                 System.out.println("Writing "+type+" file.");
                 output.writeRunsToFile(type, allRuns, orderedList);
             }
         }
         if (createRoutes) {
-            // TODO: Complete writeRoutes in the formatter
-            output.writeRoutes(allRuns, sources);
+            System.out.println("Writing routes to file.");
+            output.writeRoutes(allRuns, sources, depot);
         }
     }
 

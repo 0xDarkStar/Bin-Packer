@@ -6,7 +6,7 @@ public class Router {
      * @param inputSys Systems to route through
      * @return Optimized route through all systems
      */
-    static int[] beginRouting(double[][] inputSys) {
+    public static int[] beginRouting(double[][] inputSys) {
         double[][] dists = createDistanceTable(inputSys);
         // Create extremely simple route with greedy algorithm
         int[] route = findRoute(dists);
@@ -15,7 +15,7 @@ public class Router {
         return route;
     }
 
-    static double[][] createDistanceTable(double[][] inputSys) {
+    public static double[][] createDistanceTable(double[][] inputSys) {
         int sysCount = inputSys.length;
         double[][] distances = new double[sysCount][sysCount];
 
@@ -27,7 +27,7 @@ public class Router {
         return distances;
     }
 
-    static double pointDelta(double[] pointA, double[] pointB) {
+    public static double pointDelta(double[] pointA, double[] pointB) {
         double xA = pointA[0], yA = pointA[1], zA = pointA[2];
         double xB = pointB[0], yB = pointB[1], zB = pointB[2];
         // d = sqrt((xB-xA)^2 + (yB-yA)^2 + (zB-zA)^2)
@@ -37,7 +37,7 @@ public class Router {
         return distFromSys;
     }
 
-    static int[] findRoute(double[][] distances) {
+    public static int[] findRoute(double[][] distances) {
         int sysCount = distances.length;
         int[] route = new int[sysCount+1];
         route[0] = 0;
@@ -63,7 +63,7 @@ public class Router {
         return route;
     }
 
-    static boolean isIntInArray(int[] route, int curr) {
+    public static boolean isIntInArray(int[] route, int curr) {
         for (int i=0; i<route.length; i++) {
             if (route[i] == curr) {
                 return true;
@@ -72,7 +72,7 @@ public class Router {
         return false;
     }
 
-    static int[] optimizeRoute(int[] route, double[][] distances) {
+    public static int[] optimizeRoute(int[] route, double[][] distances) {
         int prevCost = determineCost(route, distances);
         int currCost;
         int[] improvedRoute;
@@ -94,7 +94,7 @@ public class Router {
         return route;
     }
 
-    static int determineCost(int[] route, double[][] distances) {
+    public static int determineCost(int[] route, double[][] distances) {
         int cost = 0;
         for (int i = 0; i<route.length-1; i++) {
             cost += distances[route[i]][route[i+1]];
@@ -102,7 +102,7 @@ public class Router {
         return cost;
     }
 
-    static int[] reverseSection(int[] route, int start, int end) {
+    public static int[] reverseSection(int[] route, int start, int end) {
         int[] newRoute = route.clone();
         while (start < end) {
             int valueHold = newRoute[start];
@@ -114,7 +114,7 @@ public class Router {
         return newRoute;
     }
 
-    static void printRoute(int[] route) {
+    public static void printRoute(int[] route) {
         for (int i : route) {
             System.out.print(i+" ");
         }

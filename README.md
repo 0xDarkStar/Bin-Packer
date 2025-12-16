@@ -14,11 +14,12 @@ java -jar BinPacker.jar --readlogs [options]
 ```
 
 **Options**
+- `--journaldir <path>`: Set a custom directory to look through for journals
 - `--remaining`: Show only the remaining materials
 - `--storage <capacity>`: Set storage capacity (integer)
 - `--output <formats>`: Set output formats (comma-separated: `block,flow`)
 - `--createroutes`: Create routes to be followed for each material
-- `--searchradius`: Set the search radius in LY
+- `--searchradius <range>`: Set the search radius in LY (A large radius dramatically increases completion time. It may also get rate limited...)
 
 ### Read Text File
 ```bash
@@ -30,8 +31,10 @@ java -jar BinPacker.jar <file> [options]
 
 
 ## Output Formats
+- `none`: Prevents the default (block) from being made. Use when only a route is wanted.
 - `block`: Presents all information required to complete every single trip in a human-readable format.
 - `flow`: Presents minimal information on runs while preserving list structure.
+- `route`: Only made if the `--createroutes` option is used. Gives a route to follow for each trip, simplifying the sourcing of materials.
 
 <!-- Leaving this info here until I figure out how to organize the wiki... -->
 ### Block Format
@@ -82,4 +85,23 @@ As you can tell, Flow does not say how much of each item to use.
 Instead, it only lists how many runs are needed, how full each run is, and if a run has a remainder.
 
 ### Route Format
-TO BE COMPLETED
+The route format is made to be extremely easy to follow.<br>
+Just like "block", it gives the run #, how much cargo space is used, and how much is left over.<br>
+Unlike "block", it tells the user what system and what station to go to and what materials to buy
+at the stations.<br>
+Below is an example of a route:<br>
+```
+Run 1 (1131): (Remainder: 39)
+  Go to Col 285 Sector DR-M d7-152, Hughes-fulford Works and buy:
+    - 25 units of Medical Diagnostic Equipment
+    - 65 units of Power Generators
+    - 105 units of Water Purifiers
+    - 145 units of Computer Components
+    - 242 units of Food Cartridges
+  Go to HIP 84984, Jackson Landing and buy:
+    - 145 units of Fruit and Vegetables
+  Go to Col 285 Sector IJ-D b27-7, Alcock City and buy:
+    - 161 units of Semiconductors
+    - 243 units of Superconductors
+  Return to the depot and deposit all materials.
+```
