@@ -251,10 +251,6 @@ public class Formatter {
     }
 
     public void writeRoutes(List<Run> runs, ArrayList<SystemInfo> systems, DepotInfo depot) {
-        // Find stations required for run
-        // Create route for run (use the router)
-        // Print route
-        // How...
         // Hashmaps used to link materials to their locations
         HashMap<String,String> matLocation = new HashMap<>(); // {<Material Name>, <System Name, Station Name>} (Printing)
         HashMap<String,SystemInfo> matSystem = new HashMap<>(); // {<Material Name>, <System>} (Organization of materials)
@@ -263,11 +259,11 @@ public class Formatter {
 
             for (SystemInfo currSys : systems) {
                 for (Station currStat : currSys.getStations()) {
+                    if (currStat == null) continue; // Some stations may be null
                     String[] contained = currStat.getMaterialsContained();
-                    // Some stations may not have any materials assigned
-                    if (contained == null) {
-                        continue;
-                    }
+                    // Some stations may not have any materials assigned (I don't know why the stations may be there)
+                    if (contained == null) continue;
+
                     String location = currSys.getName()+", "+currStat.getName();
                     for (String material : contained) {
                         if (material == null) continue;
@@ -277,15 +273,18 @@ public class Formatter {
                     }
                 }
             }
+            // TODO: If needed, add a warning to the output that a material's or multiple materials' source(s) couldn't be found
             
+            // Go through every run and turn it into a route to complete
             for (Run trip : runs) {
                 double[][] systemCoords = new double[trip.getItems().size()+1][3]; // Used to create distance tables
                 systemCoords[0] = depot.getSysPos();
                 int counter = 1;
+                // Get coordinates for each source system
                 for (RunItem material : trip.getItems()) {
                     SystemInfo system = matSystem.get(material.getName().toLowerCase());
                     if (system == null) {
-                        // Skip items that do not have a mapped system; prevents NPEs
+                        // Skip items that do not have a mapped system; prevents Null Pointer Exceptions
                         continue;
                     }
                     double[] individCoords = system.getSystemPosition();
@@ -295,7 +294,7 @@ public class Formatter {
                     counter++;
                 }
         
-                int[] route = Router.beginRouting(systemCoords);
+                int[] route = Router.beginRouting(systemCoords); // Create good-enough route
 
                 RunItem[] materialRoute = new RunItem[route.length]; // The materials we pick up in order
                 materialRoute[0] = null; // Depot Start
@@ -306,25 +305,27 @@ public class Formatter {
                     materialRoute[i+1] = material;
                 }
 
+                // Begin writing the route to file
                 String currRoute = "";
+                // Set variables to determine how to write the route
                 boolean depotStart = false;
-                boolean multipleTrips = (trip.getRunEndNumber()-trip.getRunStartNumber() == 0) ? false : true;
-                boolean remainderFromTrip = (trip.getRunRemainder() == 0) ? true : false;
-                int tripCount = trip.getRunEndNumber()-trip.getRunStartNumber()+1;
-                String prevLocation = "";
+                boolean multipleTrips = !(trip.getRunEndNumber()-trip.getRunStartNumber() == 0); // FULL Run?
+                boolean remainderFromTrip = trip.getRunRemainder() != 0; // Has Remainder?
+                int tripCount = trip.getRunEndNumber()-trip.getRunStartNumber()+1; // Index of each trip (inclusive-inclusive)
+                String prevLocation = ""; // Determine if we are already at the source
                 for (RunItem material : materialRoute) {
                     if (!depotStart) { // Run Info
                         if (multipleTrips) {
                             if (remainderFromTrip) {
-                                currRoute += "Runs "+trip.getRunStartNumber()+"-"+trip.getRunEndNumber()+" ("+trip.getTotalUsed()+"):\n";
-                            } else {
                                 currRoute += "Runs "+trip.getRunStartNumber()+"-"+trip.getRunEndNumber()+" ("+trip.getTotalUsed()+"): (Remainder: "+trip.getRunRemainder()+")\n";
+                            } else {
+                                currRoute += "Runs "+trip.getRunStartNumber()+"-"+trip.getRunEndNumber()+" ("+trip.getTotalUsed()+"):\n";
                             }
                         } else {
                             if (remainderFromTrip) {
-                                currRoute += "Run "+trip.getRunStartNumber()+" ("+trip.getTotalUsed()+"):\n";
-                            } else {
                                 currRoute += "Run "+trip.getRunStartNumber()+" ("+trip.getTotalUsed()+"): (Remainder: "+trip.getRunRemainder()+")\n";
+                            } else {
+                                currRoute += "Run "+trip.getRunStartNumber()+" ("+trip.getTotalUsed()+"):\n";
                             }
                         }
                         depotStart = true;
@@ -334,14 +335,18 @@ public class Formatter {
                         // No Error? We have a material
                         String matName = material.getName();
                         if (multipleTrips) {
+                            // Since we're only getting one material multiple times,
+                            // just say where it is and how many times it needs to be done
                             currRoute += "  Go to "+matLocation.get(matName.toLowerCase())+" and buy:\n";
                             currRoute += "    - A full cargo hold of "+matName+" "+tripCount+" times\n";
                         } else {
+                            // Check if we are already at the source to avoid millions of "Go to X, Y and buy..."
                             if (prevLocation.equals(matLocation.get(matName.toLowerCase()))) {
                                 currRoute += "    - "+material.getQuantity()+" units of "+matName+"\n";
                             } else {
                                 currRoute += "  Go to "+matLocation.get(matName.toLowerCase())+" and buy:\n";
                                 currRoute += "    - "+material.getQuantity()+" units of "+matName+"\n";
+                                // This is a new source, update prevLocation to know if the player leaves here or not
                                 prevLocation = matLocation.get(matName.toLowerCase());
                             }
                         }

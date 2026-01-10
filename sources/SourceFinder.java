@@ -1,15 +1,14 @@
 package sources;
 
-import java.util.regex.Pattern;
-
 import parser.jsonFiles.DepotInfo;
 
+import java.util.regex.Pattern;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
-import java.net.http.*;
 import java.io.IOException;
+import java.net.http.*;
 import java.net.URI;
 
 public class SourceFinder {
@@ -29,12 +28,10 @@ public class SourceFinder {
     HttpClient client = HttpClient.newHttpClient();
 
     public ArrayList<SystemInfo> searchForSources(DepotInfo depot, int searchRadius) {
-        System.out.println("Searching for source systems...");
+        System.out.println("Searching for all systems in radius...");
         ArrayList<SystemInfo> systems = findAllSystems(depot.getSysPos(), searchRadius);
         System.out.println("Searching for stations in systems...");
-        systems = findStationsInSystems(systems);
-        System.out.println("Checking markets in stations...");
-        systems = findMarkets(systems, depot.getMatList());
+        systems = findStationsInSystems(systems, depot.getMatList());
         System.out.println("Search Complete!");
         return systems;
     }
@@ -90,7 +87,7 @@ public class SourceFinder {
      * @param systems List of systems to search through
      * @return List of systems with the stations added
      */
-    public ArrayList<SystemInfo> findStationsInSystems(ArrayList<SystemInfo> systems) {
+    public ArrayList<SystemInfo> findStationsInSystems(ArrayList<SystemInfo> systems, HashMap<String,Integer> reqMats) {
         for (int i = 0; i<systems.size(); i++) {
             SystemInfo currSys = systems.get(i);
             String sysName = currSys.getName().replace(" ", "%20"); // Prep for use in URL
@@ -129,6 +126,10 @@ public class SourceFinder {
                 e.printStackTrace();
             }
 
+            FilterResult result = findSystemMarkets(stations, reqMats);
+            stations = result.getStations();
+            reqMats = result.getRequiredMaterials();
+
             if (stations.size() == 0) {
                 // Remove the current system if no stations found
                 systems.remove(i);
@@ -137,92 +138,12 @@ public class SourceFinder {
                 // Add the stations to the current system
                 currSys.setStations(stations);
                 systems.set(i, currSys);
-            }
-        }
-
-        return systems;
-    }
-
-    public ArrayList<SystemInfo> findMarkets(ArrayList<SystemInfo> systems, HashMap<String,Integer> reqMats) {
-        // Make all material names lowercase in the required material list
-        // This is because of liquid oxygen.
-        // In the journals it is "Liquid oxygen", but on EDSM it is "Liquid Oxygen"!
-        for (Object key : reqMats.keySet().toArray()) {
-            String matName = key.toString();
-            int tempNum = reqMats.get(matName);
-            reqMats.remove(matName);
-            reqMats.put(matName.toLowerCase(), tempNum);
-        }
-        for (int i = 0; i < systems.size(); i++) {
-            // Check currSys
-            SystemInfo currSys = systems.get(i);
-            ArrayList<Station> stations = currSys.getStations();
-
-            for (int j = 0; j<stations.size(); j++) {
-                // Check currStat in currSys
-                Station currStat = stations.get(j);
-                long marketID = currStat.getMarketId();
-
-                String url = "https://www.edsm.net/api-system-v1/stations/market?marketId="+marketID;
-
-                HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .GET().build();
-
-                HashMap<String,Long> marketStock = new HashMap<>();
-
-                try {
-                    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-                    // System.out.println("Status Code: "+response.statusCode());
-                    // System.out.println("Body: "+response.body());
-
-                    Matcher matcher = marketPattern.matcher(response.body());
-
-                    while (matcher.find()) {
-                        String matName = matcher.group(1);
-                        long matStock = Long.parseLong(matcher.group(2));
-                        if (matStock != 0) {
-                            marketStock.put(matName, matStock);
-                        }
-                    }
-                } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                // Find what materials from the list the station has
-                String[] materials = doesMarketFulfillRequirement(marketStock, reqMats);
-
-                if (materials[0] == null) {
-                    // No materials that are needed were found
-                    stations.remove(j);
-                    j--;
-                } else {
-                    // Add market to station and say what to use station for
-                    currStat.setMarket(marketStock);
-                    currStat.setMaterialsContained(materials);
-                    // Update required material list to avoid multiple stations having the same material
-                    reqMats = updateMaterialList(materials, reqMats);
-                    // Update station list in system
-                    stations.set(j, currStat);
-                }
-                currSys.setStations(stations); // update system's station list
-
                 if (reqMats.size() == 0) {
-                    // All materials have been found, end the search
-                    break;
+                    while (i+1 != systems.size()) {
+                        systems.remove(i+1);
+                    }
+                    return systems;
                 }
-            }
-            if (currSys.getStations().size() == 0) {
-                // System doesn't have any stations that have the required materials, REMOVED
-                systems.remove(i);
-                i--;
-            } else {
-                // Update systems list to show only useful stations in this system
-                systems.set(i, currSys);
-            }
-
-            if (reqMats.size() == 0) {
-                break;
             }
         }
 
@@ -236,6 +157,66 @@ public class SourceFinder {
             }
         }
         return false;
+    }
+
+    public FilterResult findSystemMarkets(ArrayList<Station> stations, HashMap<String,Integer> reqMats) {
+        // Make all material names lowercase in the required material list
+        // This is because of liquid oxygen.
+        // In the journals it is "Liquid oxygen", but on EDSM it is "Liquid Oxygen"!
+        for (Object key : reqMats.keySet().toArray()) {
+            String matName = key.toString();
+            int tempNum = reqMats.get(matName);
+            reqMats.remove(matName);
+            reqMats.put(matName.toLowerCase(), tempNum);
+        }
+        // Search all valid stations in current system for the required materials
+        for (int i = 0; i<stations.size(); i++) {
+            Station currStation = stations.get(i);
+            long marketID = currStation.getMarketId();
+
+            String url = "https://www.edsm.net/api-system-v1/stations/market?marketId="+marketID;
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET().build();
+
+            HashMap<String,Long> marketStock = new HashMap<>();
+
+            try {
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                // System.out.println("Status Code: "+response.statusCode());
+                // System.out.println("Body: "+response.body());
+
+                Matcher matcher = marketPattern.matcher(response.body());
+
+                while (matcher.find()) {
+                    String matName = matcher.group(1);
+                    long matStock = Long.parseLong(matcher.group(2));
+                    if (matStock != 0) {
+                        marketStock.put(matName, matStock);
+                    }
+                }
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            // Find what materials from the list the station has
+            String[] materials = doesMarketFulfillRequirement(marketStock, reqMats);
+
+            if (materials[0] == null) {
+                stations.remove(i);
+                i--;
+            } else {
+                // Update Station Market Info
+                currStation.setMarket(marketStock);
+                currStation.setMaterialsContained(materials);
+                // Update Required Materials List
+                reqMats = updateMaterialList(materials, reqMats);
+                // Update Station list
+                stations.set(i, currStation);
+            }
+        }
+        return new FilterResult(stations, reqMats);
     }
 
     public String[] doesMarketFulfillRequirement(HashMap<String,Long> market, HashMap<String,Integer> reqMats) {
