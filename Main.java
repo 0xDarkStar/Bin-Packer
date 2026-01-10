@@ -137,7 +137,7 @@ public class Main {
                     System.out.println("      Make runs using ONLY the remaining materials.");
                     System.out.println("  --output <formats>");
                     System.out.println("      Select the format(s) that are to be outputted. Formats must be separated by commas and NO spaces.");
-                    System.out.println("      Formats: block, float");
+                    System.out.println("      Formats: block, flow");
                     System.out.println("  --createroutes");
                     System.out.println("      Search for all nearby sources and create routes to follow");
                     System.out.println("  --searchradius <radius>");

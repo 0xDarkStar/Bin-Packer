@@ -105,3 +105,12 @@ Run 1 (1131): (Remainder: 39)
     - 243 units of Superconductors
   Return to the depot and deposit all materials.
 ```
+
+## Development
+
+### Building from Source
+Use the provided `build.sh` script to compile and package the JAR:
+```bash
+./build.sh
+```
+The version and name of the JAR file can be changed in the script.
