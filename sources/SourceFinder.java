@@ -203,7 +203,7 @@ public class SourceFinder {
             // Find what materials from the list the station has
             String[] materials = doesMarketFulfillRequirement(marketStock, reqMats);
 
-            if (materials[0] == null) {
+            if (materials == null) {
                 stations.remove(i);
                 i--;
             } else {

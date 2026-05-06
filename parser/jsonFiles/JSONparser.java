@@ -46,7 +46,9 @@ public class JSONparser {
                 int required = Integer.parseInt(matcher.group(2)); // Use if provided is ignored
                 int provided = Integer.parseInt(matcher.group(3));
                 int remaining = required-provided;                 // Use if provided is counted
-                if (useRemaining) itemList.put(name, remaining);
+                if (useRemaining) {
+                  if (remaining > 0) itemList.put(name, remaining);
+                }
                 else itemList.put(name, required);
             }
             depot.setMatList(itemList);
