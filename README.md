@@ -75,7 +75,7 @@ Instead of showing exact quantities, it shows how materials are grouped into run
  - Polymers                      646           > Run 8-10 (520) (241)
 ```
 | Symbol | Meaning|
-|--------|--------|
+|:--------:|--------|
 | `\` | This item starts or continues a run |
 | `>` | This run is complete; number in parentheses is cargo used |
 | `/` | This item ends a run |
