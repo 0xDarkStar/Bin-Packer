@@ -56,11 +56,9 @@ It tells you:
  - What is left over from the final item
  - How much of each item is in the run
 
-<!-- I may need to update this explanation in the future because it is a _bit_ hard to read -->
 ### Flow Format
-The other format is "flow".
-It trades in all the info for a simple list showing groupings of items.<br>
-Below is an example of how the "flow" format looks.
+Next is the "flow" format. It preserves the original list structure while losing out on detailed information on each run. <br>
+Instead of showing exact quantities, it shows how materials are grouped into runs, how full each run is, and if any is left over.
 ```
  - Non-Lethal Weapons             33 \
  - Medical Diagnostic Equipment   48  \
@@ -76,13 +74,13 @@ Below is an example of how the "flow" format looks.
  - Surface Stabilisers           582          \ Run 6-7 (520) (remainder: 62)
  - Polymers                      646           > Run 8-10 (520) (241)
 ```
-Because it shows less information than "block", different symbols are used to give a better idea of what each run is and where each item belongs.
-For that reason, it could be a bit harder to understand the small details. Here is a simple explanation of how it works: <br>
-It uses `\` and `/` to group items into runs and `>` to show a run. <br>
-If a run that uses multiple items has a remainder, a `\` is added at the end to "pick up" the remainder and move it to the next run. <br>
-If a run that uses one item has a remainder, it uses a `\` instead of `>` to show the remainder flowing over to the next run. <br>
-As you can tell, Flow does not say how much of each item to use.
-Instead, it only lists how many runs are needed, how full each run is, and if a run has a remainder.
+| Symbol | Meaning|
+|--------|--------|
+| `\` | This item starts or continues a run |
+| `>` | This run is complete; number in parentheses is cargo used |
+| `/` | This item ends a run |
+| `/ \` | This item ends a run, but the last item has leftover cargo that carries into the next available run |
+| `\ Run #` | This item fills one or more runs on its own, with any remainder flowing into the next run |
 
 ### Route Format
 The route format is made to be extremely easy to follow.<br>
