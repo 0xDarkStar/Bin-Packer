@@ -20,6 +20,7 @@ java -jar BinPacker.jar --readlogs [options]
 - `--output <formats>`: Set output formats (comma-separated: `block,flow`)
 - `--createroutes`: Create routes to be followed for each material
 - `--searchradius <range>`: Set the search radius in LY (A large radius dramatically increases completion time. It may also get rate limited...)
+- `--help`: Display all the possible options
 
 ### Read Text File
 ```bash
