@@ -1,6 +1,6 @@
 #! /bin/bash
 set -e
-VERSION="2.1.3" # Update version here
+VERSION="2.2.0" # Update version here
 
 echo "Compiling..."
 javac Main.java
