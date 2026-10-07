@@ -77,6 +77,10 @@ public class JSONparser {
                 } else {
                     latestFile = JournalFinder.findLatestJournal(ignored);
                 }
+                if (latestFile == null) {
+                    System.out.println("error: no Journal found with a ColonisationConstructionDepot event.");
+                    return null;
+                }
                 check = findNewestDepot(latestFile);
                 if (check == null) {
                     ignored.add(latestFile.getName());

@@ -46,6 +46,9 @@ public class Main {
                 }
             }
             depot = organizer.findListInJournal(useRemaining, journalDir);
+            if (depot == null) {
+                System.exit(1);
+            }
             orderedList = organizer.sortList(depot.getMatList());
             if (createRoutes) {
                 SourceFinder searcher = new SourceFinder();
