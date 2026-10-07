@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,11 +34,17 @@ public class Main {
         handleIn(args);
 
         if (readLogs) { // Read through the journals
-            if (storage == 0) {
-                System.err.println("Error: A storage quantity needs to be provided.");
-                System.exit(1);
-            }
             JSONparser organizer = new JSONparser();
+            if (storage == 0) {
+                try {
+                    storage = organizer.findCargoCapacity(journalDir);
+                    System.out.println("Setting storage to "+storage+"t from the latest Loadout event.");
+                } catch (IOException e) {
+                    System.out.println("error: Failed to retrieve cargo capacity.");
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+            }
             depot = organizer.findListInJournal(useRemaining, journalDir);
             orderedList = organizer.sortList(depot.getMatList());
             if (createRoutes) {

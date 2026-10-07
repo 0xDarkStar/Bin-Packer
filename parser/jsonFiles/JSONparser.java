@@ -11,10 +11,56 @@ import java.util.regex.*;
 
 public class JSONparser {
 
+    final String capacityRegex = "\"CargoCapacity\":(\\d+),";
+    final Pattern capacityPattern = Pattern.compile(capacityRegex);
     final String materialRegex = "\"Name_Localised\":\"([\\w\\s.\\-]+)+\", \"RequiredAmount\":(\\d+)+, \"ProvidedAmount\":(\\d+)+";
     final String posRegex = "\"StarPos\":\\[([\\d|.|\\-]+),([\\d|.|\\-]+),([\\d|.|\\-]+)\\]";
     final Pattern materialPattern = Pattern.compile(materialRegex);
     final Pattern posPattern = Pattern.compile(posRegex);
+
+    public int findCargoCapacity(String newJournalDir) throws IOException {
+        File latestFile;
+        List<String> fillerVar = new ArrayList<>();
+        System.out.println("Searching for the current ship's cargo capacity in journals...");
+        if (newJournalDir.length() != 0) {
+            latestFile = JournalFinder.findLatestJournal(fillerVar, newJournalDir);
+        } else {
+            latestFile = JournalFinder.findLatestJournal(fillerVar);
+        }
+        if (latestFile == null) {
+            throw new IOException("No journal found. Try checking your journals' location");
+        }
+
+        // Try to build the file backwards
+        try (RandomAccessFile file = new RandomAccessFile(latestFile, "r")) {
+            int cargoCapacity = 0;
+            long fileLength = file.length();
+            StringBuilder line = new StringBuilder();
+            long pointer = fileLength-1;
+            while (pointer >= 0) {
+                file.seek(pointer);
+                char c = (char) file.read();
+
+                // If it is the start of a new line or the start of the file, check what the current line says.
+                if (c == '\n' || pointer == 0) {
+                    String currLine = line.reverse().toString().trim();
+
+                    if (currLine.contains("\"event\":\"Loadout\"")) {
+                        Matcher matcher = capacityPattern.matcher(currLine);
+                        while (matcher.find()) {
+                            cargoCapacity = Integer.parseInt(matcher.group(1));
+                        }
+                        break; 
+                    }
+                } else {
+                    line.append(c);
+                }
+
+                pointer--;
+            }
+            return cargoCapacity;
+        }
+    }
 
     public DepotInfo findListInJournal(boolean useRemaining, String newJournalDir) {
         HashMap<String, Integer> itemList = new HashMap<>();
